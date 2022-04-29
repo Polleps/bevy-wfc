@@ -1,4 +1,4 @@
-mod tile_type;
+pub mod tile_type;
 
 use std::collections::{HashMap, HashSet};
 
