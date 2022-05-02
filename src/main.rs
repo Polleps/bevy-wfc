@@ -1,6 +1,11 @@
 mod wfc;
 
-use bevy::{prelude::*, render::camera::WindowOrigin, window::PresentMode};
+use bevy::{
+  diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+  prelude::*,
+  render::camera::ScalingMode,
+  window::PresentMode,
+};
 use wfc::tile_map::TileMap;
 
 #[derive(Component)]
@@ -23,8 +28,8 @@ pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 const RESOLUTION: f32 = 900.0;
 
-const MAP_HEIGHT: f32 = RESOLUTION / 32.0;
-const MAP_WIDTH: f32 = MAP_HEIGHT * ASPECT_RATIO;
+const MAP_HEIGHT: f32 = 50.0;
+const MAP_WIDTH: f32 = 50.0;
 
 fn main() {
   App::new()
@@ -32,11 +37,13 @@ fn main() {
     .insert_resource(WindowDescriptor {
       width: RESOLUTION * ASPECT_RATIO,
       height: RESOLUTION,
-      present_mode: PresentMode::Fifo,
+      // present_mode: PresentMode::Fifo,
       ..Default::default()
     })
     .insert_resource(RegenKey { pressed: false })
     .add_plugins(DefaultPlugins)
+    .add_plugin(LogDiagnosticsPlugin::default())
+    .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .insert_resource(TileMap::new(
       MAP_WIDTH.floor() as i32,
       MAP_HEIGHT.floor() as i32,
@@ -46,18 +53,41 @@ fn main() {
     .add_startup_system(build_map)
     .add_system(draw_map)
     .add_system(rebuild_map)
+    .add_system(move_camera)
     .run();
 }
 
 fn spawn_camera(mut commands: Commands) {
   let mut camera = OrthographicCameraBundle::new_2d();
 
-  camera.orthographic_projection.top = 0.0;
-  camera.orthographic_projection.bottom = RESOLUTION;
+  camera.orthographic_projection.bottom = 0.0;
+  camera.orthographic_projection.top = RESOLUTION;
   camera.orthographic_projection.left = 0.0;
   camera.orthographic_projection.right = RESOLUTION * ASPECT_RATIO;
-  camera.orthographic_projection.window_origin = WindowOrigin::BottomLeft;
+  // camera.orthographic_projection.window_origin = WindowOrigin::BottomLeft;
+  camera.orthographic_projection.scaling_mode = ScalingMode::None;
   commands.spawn_bundle(camera);
+}
+
+fn move_camera(
+  mut camera_q: Query<&mut Transform, With<Camera>>,
+  keys: Res<Input<KeyCode>>,
+  time: Res<Time>,
+) {
+  let mut t = camera_q.single_mut();
+  let speed = 200.0;
+  if keys.pressed(KeyCode::W) {
+    t.translation.y += speed * time.delta_seconds();
+  }
+  if keys.pressed(KeyCode::A) {
+    t.translation.x -= speed * time.delta_seconds();
+  }
+  if keys.pressed(KeyCode::S) {
+    t.translation.y -= speed * time.delta_seconds();
+  }
+  if keys.pressed(KeyCode::D) {
+    t.translation.x += speed * time.delta_seconds();
+  }
 }
 
 fn build_map(mut map: ResMut<TileMap>) {

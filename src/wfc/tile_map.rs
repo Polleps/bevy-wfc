@@ -2,7 +2,10 @@ use std::collections::VecDeque;
 
 use bevy::utils::{HashMap, HashSet};
 
-use super::{cell::Cell, tile_type::TileType};
+use super::{
+  cell::Cell,
+  tile_type::{TileRules, TileType},
+};
 use rand::Rng;
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -34,7 +37,7 @@ pub struct TileMap {
   pub width: i32,
   pub height: i32,
   pub tiles: HashMap<Position, Cell>,
-  pub rules: HashMap<TileType, HashSet<TileType>>,
+  pub rules: TileRules,
 }
 
 impl TileMap {
@@ -65,9 +68,11 @@ impl TileMap {
   }
 
   fn valid_neighbour(&self, a: &TileType, b: &Cell) -> Validity {
+    let rules = self.rules.adjacency.clone();
+
     match b {
       Cell::Collapsed(n_type) => {
-        let result = self.rules.get(n_type).unwrap().contains(a);
+        let result = rules.get(n_type).unwrap().contains(a);
 
         if result {
           Validity::Valid
@@ -78,7 +83,7 @@ impl TileMap {
       Cell::Superposition(n_types) => {
         let result = n_types
           .iter()
-          .any(|n_type| self.rules.get(n_type).unwrap().contains(a));
+          .any(|n_type| rules.get(n_type).unwrap().contains(a));
 
         if result {
           Validity::Valid
@@ -104,7 +109,7 @@ impl TileMap {
    * Creates new TileMap with the given width and height.
    * The map is filled with all cells in superposition.
    */
-  pub fn new(width: i32, height: i32, rules: HashMap<TileType, HashSet<TileType>>) -> TileMap {
+  pub fn new(width: i32, height: i32, rules: TileRules) -> TileMap {
     let tiles = TileMap::init_tiles(width, height);
 
     TileMap {
@@ -236,15 +241,11 @@ impl TileMap {
     match cell {
       Cell::Collapsed(_) => panic!("Tried to collapse a collapsed cell"),
       Cell::Superposition(types) => {
-        let mut rng = rand::thread_rng();
-        let types: Vec<&TileType> = types.iter().collect();
+        let type_to_collapse = TileType::random_from_set(&types, &self.rules);
 
-        let type_to_collapse = types.get(rng.gen_range(0..types.len())).unwrap();
-
-        self.tiles.insert(
-          position.clone(),
-          Cell::Collapsed(type_to_collapse.clone().clone()),
-        );
+        self
+          .tiles
+          .insert(position.clone(), Cell::Collapsed(type_to_collapse));
       }
     }
 
@@ -281,10 +282,55 @@ impl TileMap {
         break;
       }
     }
+
+    self.remove_sand_islands();
   }
 
   pub fn clear(&mut self) {
     let tiles = TileMap::init_tiles(self.width, self.height);
     self.tiles = tiles;
+  }
+
+  fn should_remove_sand(&self, position: &Position) -> bool {
+    let mut surrounding_tiles: Vec<Cell> = Vec::new();
+
+    for x in -1..2 {
+      for y in -1..2 {
+        if x == 0 && y == 0 {
+          continue;
+        }
+
+        let position = Position {
+          x: position.x + x,
+          y: position.y + y,
+        };
+
+        if let Some(tile) = self.tiles.get(&position) {
+          surrounding_tiles.push(tile.clone());
+        }
+      }
+    }
+
+    let should_replace = !surrounding_tiles
+      .iter()
+      .any(|cell| matches!(cell, Cell::Collapsed(TileType::Grass)));
+
+    return should_replace;
+  }
+
+  pub fn remove_sand_islands(&mut self) {
+    let mut cells_to_update = Vec::new();
+
+    for (position, cell) in self.tiles.iter() {
+      if let Cell::Collapsed(TileType::Sand) = cell {
+        if self.should_remove_sand(&position) {
+          cells_to_update.push(position.clone());
+        }
+      }
+    }
+
+    for cell in cells_to_update {
+      self.tiles.insert(cell, Cell::Collapsed(TileType::Water));
+    }
   }
 }
