@@ -1,0 +1,510 @@
+{
+  "name": "default",
+  "tileTypes": [
+    "grass",
+    "trees",
+    "water",
+    "sand",
+    "stone",
+    "flowers",
+    "mountain_top",
+    "mountain_ledge_north",
+    "mountain_ledge_south",
+    "mountain_ledge_east",
+    "mountain_ledge_west",
+    "mountain_corner_north_west",
+    "mountain_corner_north_east",
+    "mountain_corner_south_west",
+    "mountain_corner_south_east",
+    "mountain_corner_inv_north_west",
+    "mountain_corner_inv_north_east",
+    "mountain_corner_inv_south_west",
+    "mountain_corner_inv_south_east"
+  ],
+  "indexes": {
+    "grass": [
+      0
+    ],
+    "trees": [
+      1,
+      2
+    ],
+    "water": [
+      3
+    ],
+    "sand": [
+      4
+    ],
+    "stone": [
+      5
+    ],
+    "flowers": [
+      6,
+      7
+    ],
+    "deepwater": [
+      8
+    ],
+    "mountain_top": [
+      18
+    ],
+    "mountain_ledge_north": [
+      13
+    ],
+    "mountain_ledge_east": [
+      19
+    ],
+    "mountain_ledge_south": [
+      23
+    ],
+    "mountain_ledge_west": [
+      17
+    ],
+    "mountain_corner_north_west": [
+      12
+    ],
+    "mountain_corner_north_east": [
+      14
+    ],
+    "mountain_corner_south_east": [
+      24
+    ],
+    "mountain_corner_south_west": [
+      22
+    ],
+    "mountain_corner_inv_north_west": [
+      16
+    ],
+    "mountain_corner_inv_north_east": [
+      15
+    ],
+    "mountain_corner_inv_south_east": [
+      20
+    ],
+    "mountain_corner_inv_south_west": [
+      21
+    ]
+  },
+  "weights": {
+    "grass": 9,
+    "trees": 3,
+    "water": 2,
+    "sand": 1,
+    "stone": 3,
+    "flowers": 3,
+    "deepwater": 1,
+    "mountain_top": 1,
+    "mountain_ledge_north": 1,
+    "mountain_ledge_south": 1,
+    "mountain_ledge_east": 1,
+    "mountain_ledge_west": 1,
+    "mountain_corner_north_west": 1,
+    "mountain_corner_north_east": 1,
+    "mountain_corner_south_west": 1,
+    "mountain_corner_south_east": 1,
+    "mountain_corner_inv_north_west": 2,
+    "mountain_corner_inv_north_east": 2
+  },
+  "adjacency": {
+    "grass": {
+      "north": [
+        "grass",
+        "trees",
+        "flowers",
+        "stone",
+        "sand",
+        "mountain_ledge_south",
+        "mountain_corner_south_west",
+        "mountain_corner_south_east"
+      ],
+      "east": [
+        "grass",
+        "trees",
+        "flowers",
+        "stone",
+        "sand",
+        "mountain_ledge_west",
+        "mountain_corner_north_west",
+        "mountain_corner_south_west"
+      ],
+      "south": [
+        "grass",
+        "trees",
+        "flowers",
+        "stone",
+        "sand",
+        "mountain_ledge_north",
+        "mountain_corner_north_west",
+        "mountain_corner_north_east"
+      ],
+      "west": [
+        "grass",
+        "trees",
+        "flowers",
+        "stone",
+        "sand",
+        "mountain_ledge_east",
+        "mountain_corner_north_east",
+        "mountain_corner_south_east"
+      ]
+    },
+    "trees": {
+      "north": [
+        "grass",
+        "trees",
+        "flowers"
+      ],
+      "east": [
+        "grass",
+        "trees",
+        "flowers"
+      ],
+      "south": [
+        "grass",
+        "trees",
+        "flowers"
+      ],
+      "west": [
+        "grass",
+        "trees",
+        "flowers"
+      ]
+    },
+    "flowers": {
+      "north": [
+        "grass",
+        "trees",
+        "flowers",
+        "sand",
+        "mountain_corner_south_west",
+        "mountain_corner_south_west",
+        "mountain_ledge_south"
+      ],
+      "east": [
+        "grass",
+        "trees",
+        "flowers",
+        "sand",
+        "mountain_corner_north_west",
+        "mountain_corner_south_west",
+        "mountain_ledge_west"
+      ],
+      "south": [
+        "grass",
+        "trees",
+        "flowers",
+        "sand",
+        "mountain_corner_north_east",
+        "mountain_corner_north_west",
+        "mountain_ledge_north"
+      ],
+      "west": [
+        "grass",
+        "trees",
+        "flowers",
+        "sand",
+        "mountain_corner_north_east",
+        "mountain_corner_south_east",
+        "mountain_ledge_east"
+      ]
+    },
+    "stone": {
+      "north": [
+        "grass",
+        "mountain_corner_south_west",
+        "mountain_corner_south_west",
+        "mountain_ledge_south"
+      ],
+      "east": [
+        "grass",
+        "mountain_corner_north_west",
+        "mountain_corner_south_west",
+        "mountain_ledge_west"
+      ],
+      "south": [
+        "grass",
+        "mountain_corner_north_east",
+        "mountain_corner_north_west",
+        "mountain_ledge_north"
+      ],
+      "west": [
+        "grass",
+        "mountain_corner_north_east",
+        "mountain_corner_south_east",
+        "mountain_ledge_east"
+      ]
+    },
+    "sand": {
+      "north": [
+        "grass",
+        "water",
+        "sand"
+      ],
+      "east": [
+        "grass",
+        "water",
+        "sand"
+      ],
+      "south": [
+        "grass",
+        "water",
+        "sand"
+      ],
+      "west": [
+        "grass",
+        "water",
+        "sand"
+      ]
+    },
+    "water": {
+      "north": [
+        "sand",
+        "water",
+        "deepwater"
+      ],
+      "east": [
+        "sand",
+        "water",
+        "deepwater"
+      ],
+      "south": [
+        "sand",
+        "water",
+        "deepwater"
+      ],
+      "west": [
+        "sand",
+        "water",
+        "deepwater"
+      ]
+    },
+    "deepwater": {
+      "north": [
+        "water",
+        "deepwater"
+      ],
+      "east": [
+        "water",
+        "deepwater"
+      ],
+      "south": [
+        "water",
+        "deepwater"
+      ],
+      "west": [
+        "water",
+        "deepwater"
+      ]
+    },
+    "mountain_top": {
+      "north": [
+        "mountain_top",
+        "mountain_ledge_north",
+        "mountain_corner_inv_south_east",
+        "mountain_corner_inv_south_west"
+      ],
+      "east": [
+        "mountain_top",
+        "mountain_ledge_east",
+        "mountain_corner_inv_north_east"
+      ],
+      "south": [
+        "mountain_top",
+        "mountain_ledge_south",
+        "mountain_corner_inv_north_east",
+        "mountain_corner_inv_north_west"
+      ],
+      "west": [
+        "mountain_top",
+        "mountain_ledge_west",
+        "mountain_corner_inv_north_west"
+      ]
+    },
+    "mountain_ledge_north": {
+      "north": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "east": [
+        "mountain_ledge_north",
+        "mountain_corner_north_east"
+      ],
+      "south": [
+        "mountain_top"
+      ],
+      "west": [
+        "mountain_ledge_north",
+        "mountain_corner_north_west",
+        "mountain_corner_inv_south_east"
+      ]
+    },
+    "mountain_ledge_east": {
+      "north": [
+        "mountain_ledge_east",
+        "mountain_corner_north_east",
+        "mountain_corner_inv_north_east"
+      ],
+      "east": [
+        "grass",
+        "stone",
+        "flowers",
+        "mountain_ledge_west"
+      ],
+      "south": [
+        "mountain_ledge_east",
+        "mountain_corner_south_east",
+        "mountain_corner_inv_south_east"
+      ],
+      "west": [
+        "mountain_top"
+      ]
+    },
+    "mountain_ledge_south": {
+      "north": [
+        "mountain_top"
+      ],
+      "east": [
+        "mountain_ledge_south",
+        "mountain_corner_south_east",
+        "mountain_corner_inv_north_west"
+      ],
+      "south": [
+        "grass",
+        "stone",
+        "flowers",
+        "mountain_ledge_north"
+      ],
+      "west": [
+        "mountain_ledge_south",
+        "mountain_corner_south_west",
+        "mountain_corner_inv_north_east"
+      ]
+    },
+    "mountain_ledge_west": {
+      "north": [
+        "mountain_ledge_west",
+        "mountain_corner_north_west",
+        "mountain_corner_inv_north_west"
+      ],
+      "east": [
+        "mountain_top"
+      ],
+      "south": [
+        "mountain_ledge_west",
+        "mountain_corner_south_west",
+        "mountain_corner_inv_south_west"
+      ],
+      "west": [
+        "grass",
+        "stone",
+        "flowers",
+        "mountain_ledge_east"
+      ]
+    },
+    "mountain_corner_north_west": {
+      "north": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "east": [
+        "mountain_ledge_north"
+      ],
+      "south": [
+        "mountain_ledge_west"
+      ],
+      "west": [
+        "grass",
+        "stone",
+        "flowers"
+      ]
+    },
+    "mountain_corner_north_east": {
+      "north": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "east": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "south": [
+        "mountain_ledge_east",
+        "mountain_corner_inv_south_east"
+      ],
+      "west": [
+        "mountain_ledge_north"
+      ]
+    },
+    "mountain_corner_south_east": {
+      "north": [
+        "mountain_ledge_east"
+      ],
+      "east": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "south": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "west": [
+        "mountain_ledge_south"
+      ]
+    },
+    "mountain_corner_south_west": {
+      "north": [
+        "mountain_ledge_west"
+      ],
+      "east": [
+        "mountain_ledge_south"
+      ],
+      "south": [
+        "grass",
+        "stone",
+        "flowers"
+      ],
+      "west": [
+        "grass",
+        "stone",
+        "flowers"
+      ]
+    },
+    "mountain_corner_inv_north_west": {
+      "north": [
+        "mountain_top"
+      ],
+      "east": [
+        "mountain_top"
+      ],
+      "south": [
+        "mountain_ledge_west"
+      ],
+      "west": [
+        "mountain_ledge_south",
+        "mountain_corner_south_west"
+      ]
+    },
+    "mountain_corner_inv_north_east": {
+      "north": [
+        "mountain_top"
+      ],
+      "east": [
+        "mountain_ledge_south",
+        "mountain_corner_south_east"
+      ],
+      "south": [
+        "mountain_ledge_east",
+        "mountain_corner_inv_south_east"
+      ],
+      "west": [
+        "mountain_top"
+      ]
+    }
+  }
+}

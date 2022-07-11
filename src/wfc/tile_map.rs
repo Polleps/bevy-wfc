@@ -1,10 +1,10 @@
-use std::collections::VecDeque;
+use std::{cmp::Ordering, collections::VecDeque};
 
 use bevy::utils::{HashMap, HashSet};
 
 use super::{
   cell::Cell,
-  tile_type::{TileRules, TileType},
+  tile_rules::{Direction, TileRules},
 };
 use rand::Rng;
 
@@ -12,13 +12,6 @@ use rand::Rng;
 pub struct Position {
   pub x: i32,
   pub y: i32,
-}
-
-enum Direction {
-  North,
-  East,
-  South,
-  West,
 }
 
 #[derive(Debug)]
@@ -33,6 +26,7 @@ pub enum MapStatus {
   Finished,
 }
 
+#[derive(Debug)]
 pub struct TileMap {
   pub width: i32,
   pub height: i32,
@@ -41,6 +35,19 @@ pub struct TileMap {
 }
 
 impl TileMap {
+  /**
+   * Creates new TileMap with the given width and height.
+   * All tiles are empty.
+   */
+  pub fn new(width: i32, height: i32, rules: TileRules) -> TileMap {
+    TileMap {
+      width,
+      height,
+      tiles: HashMap::new(),
+      rules,
+    }
+  }
+
   fn get_neighbour(&self, position: &Position, direction: &Direction) -> Option<(Position, Cell)> {
     let mut new_position = Position {
       x: position.x,
@@ -67,12 +74,10 @@ impl TileMap {
     Some((new_position, cell.clone()))
   }
 
-  fn valid_neighbour(&self, a: &TileType, b: &Cell) -> Validity {
-    let rules = self.rules.adjacency.clone();
-
+  fn valid_neighbour(&self, a: &str, b: &Cell, direction: &Direction) -> Validity {
     match b {
       Cell::Collapsed(n_type) => {
-        let result = rules.get(n_type).unwrap().contains(a);
+        let result = self.rules.valid_neighbour(a, n_type, direction);
 
         if result {
           Validity::Valid
@@ -83,7 +88,7 @@ impl TileMap {
       Cell::Superposition(n_types) => {
         let result = n_types
           .iter()
-          .any(|n_type| rules.get(n_type).unwrap().contains(a));
+          .any(|n_type| self.rules.valid_neighbour(a, n_type, direction));
 
         if result {
           Validity::Valid
@@ -94,33 +99,17 @@ impl TileMap {
     }
   }
 
-  fn init_tiles(width: i32, height: i32) -> HashMap<Position, Cell> {
-    let mut tiles = HashMap::new();
-
-    for x in 0..width {
-      for y in 0..height {
-        tiles.insert(Position { x, y }, Cell::new());
+  fn init_tiles(&mut self) {
+    for x in 0..self.width {
+      for y in 0..self.height {
+        self
+          .tiles
+          .insert(Position { x, y }, Cell::new(&self.rules.tile_types));
       }
     }
-
-    tiles
-  }
-  /**
-   * Creates new TileMap with the given width and height.
-   * The map is filled with all cells in superposition.
-   */
-  pub fn new(width: i32, height: i32, rules: TileRules) -> TileMap {
-    let tiles = TileMap::init_tiles(width, height);
-
-    TileMap {
-      width,
-      height,
-      tiles,
-      rules,
-    }
   }
 
-  fn get_all_neighbours(&self, position: &Position) -> Vec<(Position, Cell)> {
+  fn get_all_neighbours(&self, position: &Position) -> Vec<(Direction, Position, Cell)> {
     let directions = [
       Direction::North,
       Direction::East,
@@ -128,12 +117,15 @@ impl TileMap {
       Direction::West,
     ];
 
-    let neighbours = directions
+    let neighbours: Vec<(Direction, Position, Cell)> = directions
       .iter()
-      .filter_map(|direction| self.get_neighbour(position, direction))
+      .filter_map(|direction| {
+        let (pos, cell) = self.get_neighbour(position, direction)?;
+        Some((direction.clone(), pos, cell))
+      })
       .collect();
 
-    return neighbours;
+    neighbours
   }
 
   /**
@@ -151,52 +143,65 @@ impl TileMap {
 
     let neighbours = self.get_all_neighbours(&position);
 
-    let type_filter = |tile_type: &&TileType| {
+    let type_filter = |tile_type: &&std::string::String| {
       // Fold neighgours to find out if the tiletype can exist next to its neighbours.
-      let validity = neighbours.iter().fold(Validity::Invalid, |acc, (_, item)| {
-        if let Validity::Impossible = acc {
-          // A collapsed tile next to this cell is an incompatible neighbour.
-          return Validity::Impossible;
-        }
+      let validity = neighbours
+        .iter()
+        .fold(Validity::Invalid, |acc, (direction, _, item)| {
+          if let Validity::Impossible = acc {
+            // A collapsed tile next to this cell is an incompatible neighbour.
+            return Validity::Impossible;
+          }
 
-        match self.valid_neighbour(tile_type, item) {
-          // The neighbour has a valid tile type for this type.
-          Validity::Valid => Validity::Valid,
-          // The neighbour is in superposition but none of its possible states are valid with this type.
-          Validity::Invalid => acc,
-          // The neighbour is collapsed and its type is not a valid neighbour for this one.
-          Validity::Impossible => Validity::Impossible,
-        }
-      });
+          match self.valid_neighbour(tile_type, item, direction) {
+            // The neighbour has a valid tile type for this type.
+            Validity::Valid => Validity::Valid,
+            // The neighbour is in superposition but none of its possible states are valid with this type.
+            Validity::Invalid => acc,
+            // The neighbour is collapsed and its type is not a valid neighbour for this one.
+            Validity::Impossible => Validity::Impossible,
+          }
+        });
 
       matches!(validity, Validity::Valid)
     };
 
-    let possible_types: Vec<TileType> = types.iter().filter(type_filter).cloned().collect();
+    let possible_types: Vec<String> = types.iter().filter(type_filter).cloned().collect();
 
     if possible_types.len() == 1 {
+      // Cell has only one possible type left so we collapse the cell.
       self.tiles.insert(
-        position.clone(),
+        position,
         Cell::Collapsed(possible_types.first().unwrap().clone()),
       );
     } else {
-      let set: HashSet<TileType> = possible_types.iter().cloned().collect();
+      // Cell has more than one possible type left so we update the cell to reflect these changes.
+      let set: HashSet<String> = possible_types.iter().cloned().collect();
 
-      self
-        .tiles
-        .insert(position.clone(), Cell::Superposition(set));
+      self.tiles.insert(position, Cell::Superposition(set));
     }
 
+    // If the cell has been changed in some way we return the positions of the neighbours.
     if possible_types.len() != types.len() {
-      return Some(
-        neighbours
-          .iter()
-          .filter_map(|tup: &(Position, Cell)| Some(tup.0.clone()))
-          .collect(),
-      );
+      let mut changed_positions = Vec::new();
+      for (_, pos, _) in neighbours {
+        changed_positions.push(pos);
+      }
+
+      return Some(changed_positions);
     }
 
-    return None;
+    None
+  }
+
+  fn calculate_entropy(&self, types: &HashSet<String>) -> i32 {
+    if types.len() == self.rules.tile_types.len() {
+      return i32::MAX;
+    }
+
+    types
+      .iter()
+      .fold(0, |acc, item| acc + self.rules.get_weight_of_type(item))
   }
 
   /**
@@ -205,25 +210,27 @@ impl TileMap {
    */
   fn find_lowest_entropy(&self) -> Option<Position> {
     let mut lowest_tiles: Vec<Position> = Vec::new();
-    let mut lowest_count = std::usize::MAX;
+    let mut lowest_entropy = std::i32::MAX;
     let mut rng = rand::thread_rng();
 
     for (position, cell) in self.tiles.iter() {
-      match cell {
-        Cell::Collapsed(_) => continue,
-        Cell::Superposition(types) => {
-          if types.len() < lowest_count {
-            lowest_tiles = Vec::new();
-            lowest_tiles.push(position.clone());
-            lowest_count = types.len();
-          } else if types.len() == lowest_count {
+      if let Cell::Superposition(types) = cell {
+        let entropy = self.calculate_entropy(types);
+
+        match entropy.cmp(&lowest_entropy) {
+          Ordering::Less => {
+            lowest_tiles = Vec::from([position.clone()]);
+            lowest_entropy = entropy;
+          }
+          Ordering::Equal => {
             lowest_tiles.push(position.clone());
           }
+          Ordering::Greater => {}
         }
       }
     }
 
-    if lowest_tiles.len() == 0 {
+    if lowest_tiles.is_empty() {
       return None;
     }
 
@@ -241,11 +248,11 @@ impl TileMap {
     match cell {
       Cell::Collapsed(_) => panic!("Tried to collapse a collapsed cell"),
       Cell::Superposition(types) => {
-        let type_to_collapse = TileType::random_from_set(&types, &self.rules);
+        let type_to_collapse = &self.rules.random_tile_from_set(&types);
 
         self
           .tiles
-          .insert(position.clone(), Cell::Collapsed(type_to_collapse));
+          .insert(position.clone(), Cell::Collapsed(type_to_collapse.clone()));
       }
     }
 
@@ -260,7 +267,7 @@ impl TileMap {
         self
           .get_all_neighbours(&position)
           .iter()
-          .for_each(|(pos, _)| updated_positions.push_back(pos.clone()));
+          .for_each(|(_, pos, _)| updated_positions.push_back(pos.clone()));
       }
       None => return MapStatus::Finished,
     }
@@ -277,6 +284,8 @@ impl TileMap {
   }
 
   pub fn generate(&mut self) {
+    self.init_tiles();
+
     loop {
       if let MapStatus::Finished = self.update_and_propagate() {
         break;
@@ -287,8 +296,7 @@ impl TileMap {
   }
 
   pub fn clear(&mut self) {
-    let tiles = TileMap::init_tiles(self.width, self.height);
-    self.tiles = tiles;
+    self.init_tiles();
   }
 
   fn should_remove_sand(&self, position: &Position) -> bool {
@@ -311,26 +319,31 @@ impl TileMap {
       }
     }
 
+    let grass = "grass".to_string();
+
     let should_replace = !surrounding_tiles
       .iter()
-      .any(|cell| matches!(cell, Cell::Collapsed(TileType::Grass)));
+      .any(|cell| matches!(cell, Cell::Collapsed(tile) if tile == &grass));
 
-    return should_replace;
+    should_replace
   }
 
   pub fn remove_sand_islands(&mut self) {
+    let sand = "sand".to_string();
+
     let mut cells_to_update = Vec::new();
 
     for (position, cell) in self.tiles.iter() {
-      if let Cell::Collapsed(TileType::Sand) = cell {
-        if self.should_remove_sand(&position) {
-          cells_to_update.push(position.clone());
-        }
+      if matches!(cell, Cell::Collapsed(tile) if tile == &sand) && self.should_remove_sand(position)
+      {
+        cells_to_update.push(position.clone());
       }
     }
 
+    let water = "water".to_string();
+
     for cell in cells_to_update {
-      self.tiles.insert(cell, Cell::Collapsed(TileType::Water));
+      self.tiles.insert(cell, Cell::Collapsed(water.clone()));
     }
   }
 }
